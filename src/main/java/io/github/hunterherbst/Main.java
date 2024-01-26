@@ -9,7 +9,7 @@ import java.util.concurrent.TimeUnit;
 public class Main {
     public static void main(String[] args) {
         // Hard coded values
-        int start = 2,
+        final int start = 2,
             end = (int) Math.pow(10, 8), // This one should eventually be replaced with 10^8
             nT = 8,
             tRange = (end - start) / nT,
@@ -19,7 +19,7 @@ public class Main {
         PrimeTask[] tasks = new PrimeTask[nT];
 
         // List to store primes
-        ArrayList<Integer> primes = new ArrayList<Integer>();
+        ArrayList<Integer> primes = new ArrayList<>();
 
         long startTime = System.currentTimeMillis();
 
@@ -37,10 +37,15 @@ public class Main {
         ex.shutdown();
 
         // Now start :sittin: and :waiting: while the threads do their thing (but not waiting too long, in fact, only 60 seconds)
+        boolean isFinished = false;
         try {
-            ex.awaitTermination(maxTimeSeconds, TimeUnit.SECONDS);
+            isFinished = ex.awaitTermination(maxTimeSeconds, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             System.err.println("ERROR: Threads were interrupted (possibly timed out)\n" + e.getMessage());
+        }
+        if(!isFinished) {
+            System.err.println("ERROR: Threads timed out");
+            return;
         }
 
         long endTime = System.currentTimeMillis();
@@ -50,8 +55,8 @@ public class Main {
 
         // Sum em (this is going to be an absolutely stupid big number)
         long sum = 0;
-        for(int i = 0; i < primes.size(); i++) {
-            sum += primes.get(i);
+        for(int prime : primes) {
+            sum += prime;
         }
 
         // Print the stats for this play-through
@@ -59,9 +64,9 @@ public class Main {
         System.out.println("Total primes: " + primes.size());
         System.out.println("Sum of primes: " + sum);
         System.out.println("Top 10 primes:");
-        String top10 = Integer.toString(primes.get(primes.size() - 1));
+        StringBuilder top10 = new StringBuilder(Integer.toString(primes.get(primes.size() - 1)));
         for(int i = primes.size() - 2; i > primes.size() - 11; i--) {
-            top10 = primes.get(i) + " " + top10;
+            top10.insert(0, primes.get(i) + " ");
         }
         System.out.println(top10);
 
@@ -81,12 +86,12 @@ public class Main {
 class PrimeTask implements Runnable {
 
     // Prime calculation variables
-    private int start;
-    private int end;
-    private ArrayList<Integer> primes;
+    private final int start;
+    private final  int end;
+    private final ArrayList<Integer> primes;
 
     // Informational variables
-    private String name;
+    private final String name;
     private long execTime;
 
     public PrimeTask(String name, int start, int end, ArrayList<Integer> primes) {
@@ -115,15 +120,6 @@ class PrimeTask implements Runnable {
         execTime = (endTime - startTime);
         System.out.println("Thread " + name + " finished in " + execTime + "ms");
     }
-
-    public String getName() {
-        return name;
-    }
-
-    public long getExecTime() {
-        return execTime;
-    }
-
     private boolean isPrime(int n) {
         if (n < 2) {
             return false;
